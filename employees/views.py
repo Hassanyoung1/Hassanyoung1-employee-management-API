@@ -71,7 +71,8 @@ class EmployeeViewSet(viewsets.GenericViewSet, viewsets.mixins.ListModelMixin, v
 
         employee.delete()
         return Response({'detail': 'Employee deleted successfully.'}, status=status.HTTP_204_NO_CONTENT)
-    
+
+   
 
 class PerformanceReviewViewSet(viewsets.ModelViewSet):
     """
