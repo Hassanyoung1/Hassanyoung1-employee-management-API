@@ -7,6 +7,10 @@ from django.shortcuts import get_object_or_404
 
 class EmployeeViewSet(viewsets.GenericViewSet, viewsets.mixins.ListModelMixin, viewsets.mixins.CreateModelMixin, viewsets.mixins.UpdateModelMixin):
     serializer_class = EmployeeSerializer
+    queryset = Employee.objects.all()
+
+    def get_queryset(self):
+        return Employee.objects.all()
 
     @action(detail=False, methods=['get'], url_path='(?P<identifier>[^/.]+)')
     def retrieve_employee(self, request, identifier=None, *args, **kwargs):
@@ -23,6 +27,12 @@ class EmployeeViewSet(viewsets.GenericViewSet, viewsets.mixins.ListModelMixin, v
                 employee = Employee.objects.filter(last_name__iexact=identifier).first()
 
         serializer = self.get_serializer(employee)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+    
+    @action(detail=False, methods=['get'], url_path='')
+    def list(self, request):
+        queryset = Employee.objects.all()
+        serializer = EmployeeSerializer(queryset, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     @action(detail=False, methods=['post'], url_path='create')
