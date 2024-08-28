@@ -8,13 +8,22 @@ from django.shortcuts import get_object_or_404
 class EmployeeViewSet(viewsets.GenericViewSet, viewsets.mixins.ListModelMixin, viewsets.mixins.CreateModelMixin, viewsets.mixins.UpdateModelMixin):
     serializer_class = EmployeeSerializer
 
-    def get_queryset(self):
-        """Override the default method to allow filtering by name"""
-        queryset = Employee.objects.all()
-        name = self.request.query_params.get('name', None)
-        if name is not None:
-            queryset = queryset.filter(first_name__icontains=name) | queryset.filter(last_name__icontains=name)
-        return queryset
+    @action(detail=False, methods=['get'], url_path='(?P<identifier>[^/.]+)')
+    def retrieve_employee(self, request, identifier=None, *args, **kwargs):
+        """
+        Retrieve an employee by ID, first name, or last name.
+        """
+        # Check if the identifier is numeric (i.e., an ID)
+        if identifier.isdigit():
+            employee = get_object_or_404(Employee, id=identifier)
+        else:
+            # Try to find an employee by first name or last name (case-insensitive)
+            employee = Employee.objects.filter(first_name__iexact=identifier).first()
+            if not employee:
+                employee = Employee.objects.filter(last_name__iexact=identifier).first()
+
+        serializer = self.get_serializer(employee)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
     @action(detail=False, methods=['post'], url_path='create')
     def create_employee(self, request, *args, **kwargs):
@@ -61,7 +70,15 @@ class PerformanceReviewViewSet(viewsets.ModelViewSet):
     Inherits from:
         - viewsets.ModelViewSet
     """
+    queryset = Review.objects.all()
+    serializer_class = ReviewSerializer
 
+    def get_queryset(self):
+        return Review.objects.all()
+    
+    def get_serializer(self, *args, **kwargs):
+        return super().get_serializer(*args, **kwargs)
+    
     def retrieve(self, request, pk=None, *args, **kwargs):
         """
         Retrieve a specific employee by ID.
